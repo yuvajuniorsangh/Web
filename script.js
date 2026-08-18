@@ -176,146 +176,93 @@ document.addEventListener("DOMContentLoaded", function() {
     }
    
     /* ========================================================
-       OTP VERIFICATION LOGIC (दोनों फॉर्म्स के लिए Reusable Function)
-    ======================================================== */
+      // ========================================================
+  // वॉलंटियर / कार्यकर्ता फॉर्म का फुल JavaScript कोड
+  // ========================================================*/
+  document.getElementById('volunteerRegistrationForm').addEventListener('submit', async (e) => {
+    e.preventDefault(); // फॉर्म सबमिट होते ही पेज को रीफ्रेश होने से रोकना
     
-    // यह एक मास्टर फंक्शन है जो किसी भी फॉर्म में OTP चालू कर सकता है
-    function setupOTPForForm(mobileInputId, sendBtnId, otpSectionId, otpInputId, verifyBtnId, statusMsgId, submitBtnSelector) {
-        const sendOtpBtn = document.getElementById(sendBtnId);
-        const verifyOtpBtn = document.getElementById(verifyBtnId);
-        const otpSection = document.getElementById(otpSectionId);
-        const otpStatusMsg = document.getElementById(statusMsgId);
-        const submitBtn = document.querySelector(submitBtnSelector);
-
-        // अगर पेज पर ये बटन्स मौजूद हैं, तभी कोड चलेगा
-        if (!sendOtpBtn || !submitBtn) return;
-
-        // 1. मुख्य Submit बटन को शुरुआत में लॉक करें
-        submitBtn.disabled = true;
-        submitBtn.style.opacity = '0.5';
-        submitBtn.style.cursor = 'not-allowed';
-
-        // 2. Send OTP का लॉजिक
-        sendOtpBtn.addEventListener('click', () => {
-            const phoneNumber = document.getElementById(mobileInputId).value;
-            if (phoneNumber.length !== 10) {
-                alert("⚠️ कृपया सही 10-अंकों का मोबाइल नंबर दर्ज करें!");
-                return;
-            }
-
-            sendOtpBtn.innerText = "Sending...";
-
-            // UI टेस्ट टाइमर (Firebase लगने तक)
-            setTimeout(() => {
-                otpSection.style.display = 'block';
-                sendOtpBtn.innerText = "OTP Sent!";
-                sendOtpBtn.disabled = true;
-            }, 1000);
-        });
-
-        // 3. Verify OTP का लॉजिक
-        verifyOtpBtn.addEventListener('click', () => {
-            const otpCode = document.getElementById(otpInputId).value;
-            if (otpCode.length !== 6) {
-                alert("⚠️ कृपया मोबाइल पर आया 6-अंकों का सही OTP दर्ज करें!");
-                return;
-            }
-
-            verifyOtpBtn.innerText = "Verifying...";
-
-            // UI टेस्ट टाइमर (Firebase लगने तक)
-            setTimeout(() => {
-                otpStatusMsg.innerText = "Verified ✅";
-                otpStatusMsg.className = "otp-status success";
-                verifyOtpBtn.innerText = "Verified";
-                verifyOtpBtn.disabled = true;
-
-                // Submit बटन अनलॉक करें
-                submitBtn.disabled = false;
-                submitBtn.style.opacity = '1';
-                submitBtn.style.cursor = 'pointer';
-            }, 1000);
-        });
+    // 1. पासवर्ड सिक्योरिटी चेक (Password Verification)
+    const vPassword = document.getElementById('v-password').value;
+    if(vPassword !== "101PRASH") {
+        alert("पासवर्ड गलत है! यह फॉर्म केवल अधिकृत सदस्यों के लिए है।");
+        return; // पासवर्ड गलत होने पर कोड यहीं रुक जाएगा
     }
 
-    // --- फंक्शन को कॉल करना (दोनों फॉर्म्स को एक्टिवेट करें) ---
+    // 2. मोबाइल नंबर वैलिडेशन (10 अंक)
+    const mobile = document.getElementById('v-mobile').value;
+    if(mobile.length !== 10) {
+        alert("⚠️ कृपया 10 अंकों का सही मोबाइल नंबर डालें।");
+        return;
+    }
 
-    // 1. वोलेंटियर फॉर्म के लिए OTP चालू करें
-    setupOTPForForm(
-        'v-mobile', 'send-otp-btn', 'otp-section', 'v-otp', 'verify-otp-btn', 'otp-status-msg', 
-        '#volunteerRegistrationForm button[type="submit"]'
-    );
+    // 3. शिफ्ट (Checkboxes) का डेटा निकालना
+    const shifts = Array.from(document.querySelectorAll('input[name="shift"]:checked')).map(cb => cb.value);
+    if(shifts.length === 0) {
+        alert("⚠️ कृपया कम से कम एक शिफ्ट (कार्य का समय) ज़रूर चुनें!");
+        return;
+    }
 
-    // 2. सहयोग (Donation) फॉर्म के लिए OTP चालू करें
-    setupOTPForForm(
-        'd-mobile', 'send-d-otp-btn', 'd-otp-section', 'd-otp', 'verify-d-otp-btn', 'd-otp-status-msg', 
-        '#donationForm button[type="submit"]'
-    );
+    // 4. लिंग (Gender Radio Button) का डेटा निकालना
+    const genderObj = document.querySelector('input[name="gender"]:checked');
+    const gender = genderObj ? genderObj.value : "नहीं बताया";
+
+    // 5. Firebase Firestore में सारा डेटा सेव करना
+    try {
+      await addDoc(collection(db, "volunteers"), {
+        name: document.getElementById('v-name').value,          // नाम
+        fatherName: document.getElementById('v-fname').value,    // पिता का नाम
+        mobile: mobile,                                          // मोबाइल नंबर
+        email: document.getElementById('v-email').value,         // ईमेल आईडी
+        address: document.getElementById('v-address').value,     // पूरा पता
+        gender: gender,                                          // लिंग
+        availableShifts: shifts,                                 // चुनी गई शिफ्ट्स
+        feedback: document.getElementById('v-feedback').value,   // सुझाव / फीडबैक
+        timestamp: new Date()                                    // फॉर्म भरने का समय और तारीख
+      });
+      
+      // 6. सफलता का मैसेज दिखाना और फॉर्म को खाली करना
+      alert(`🙏 जय श्री कृष्ण, ${document.getElementById('v-name').value}!\n\nआपका कार्यकर्ता रजिस्ट्रेशन फॉर्म सफलतापूर्वक जमा हो गया है।`);
+      e.target.reset(); // फॉर्म के सारे बॉक्स वापस खाली कर देगा
+      
+    } catch(error) {
+      console.error("Firebase Error: ", error);
+      alert("डेटा सेव करने में तकनीकी दिक्कत आई: " + error.message);
+    }
+  });
     /* ========================================================
-       8. VOLUNTEER SECTION LOGIC (Form Validation & Data Collection)
-       फॉर्म सबमिट होने पर चेक करना और डेटा इकट्ठा करना
-    ======================================================== */
-    const volunteerForm = document.getElementById('volunteerRegistrationForm');
-
-    if (volunteerForm) {
-        volunteerForm.addEventListener('submit', function(e) {
-            // 1. फॉर्म सबमिट होते ही पेज को रीलोड होने से रोकें
-            e.preventDefault(); 
-
-            // 2. चेक करें कि क्या कम से कम एक शिफ्ट (Checkbox) चुनी गई है?
-            const shiftCheckboxes = volunteerForm.querySelectorAll('input[name="shift"]:checked');
-            
-            if (shiftCheckboxes.length === 0) {
-                alert("⚠️ कृपया कम से कम एक शिफ्ट (कार्य का समय) ज़रूर चुनें!");
-                return; // अगर शिफ्ट नहीं चुनी है, तो कोड यहीं रुक जाएगा और फॉर्म सबमिट नहीं होगा
-            }
-
-            // 3. फॉर्म का सारा डेटा इकट्ठा करना (भविष्य में Firebase में भेजने के लिए)
-            const formData = new FormData(volunteerForm);
-            const volunteerData = Object.fromEntries(formData.entries());
-            
-            // चूंकि यूज़र एक से ज़्यादा शिफ्ट चुन सकता है, इसलिए उन्हें एक Array (लिस्ट) में सेव करें
-            const selectedShifts = [];
-            shiftCheckboxes.forEach(box => selectedShifts.push(box.value));
-            volunteerData.shift = selectedShifts;
-
-            // डेवलपर के देखने के लिए कंसोल में डेटा प्रिंट करना
-            console.log("नया वोलेंटियर डेटा तैयार है:", volunteerData);
-
-            // 4. यूज़र को सफलता का मैसेज (Success Alert) दिखाएं
-            alert(`🙏 जय श्री कृष्ण, ${volunteerData.name}!\n\nआपका वोलेंटियर रजिस्ट्रेशन फॉर्म सफलतापूर्वक भर गया है।`);
-
-            // 5. फॉर्म सबमिट होने के बाद उसे खाली (Reset) कर दें
-            volunteerForm.reset();
-            
-        });
+       // ========================================================*/
+  // सहयोग फॉर्म (Donation) का फुल JavaScript कोड
+  // ========================================================
+  document.getElementById('donationForm').addEventListener('submit', async (e) => {
+    e.preventDefault(); // फॉर्म सबमिट होते ही पेज को रीफ्रेश होने से रोकना
+    
+    // 1. मोबाइल नंबर वैलिडेशन (10 अंक)
+    const mobile = document.getElementById('d-mobile').value;
+    if(mobile.length !== 10) {
+        alert("⚠️ कृपया 10 अंकों का सही मोबाइल नंबर डालें।");
+        return; // नंबर गलत होने पर कोड यहीं रुक जाएगा
     }
-    /* ========================================================
-       9. SAHYOG (DONATION) SECTION LOGIC 
-       पेमेंट के बाद UTR और सहयोग विवरण कैप्चर करना
-    ======================================================== */
-    const donationForm = document.getElementById('donationForm');
 
-    if (donationForm) {
-        donationForm.addEventListener('submit', function(e) {
-            e.preventDefault(); 
-
-            const formData = new FormData(donationForm);
-            const donationData = Object.fromEntries(formData.entries());
-            
-            // यह चेक करने के लिए कि फोटो अटैच हुई है या नहीं
-            const receiptFile = document.getElementById('donation-receipt').files[0];
-            
-            console.log("नया सहयोग डेटा (स्क्रीनशॉट के साथ):", donationData);
-            if(receiptFile) {
-                console.log("अपलोड की गई फाइल का नाम:", receiptFile.name);
-            }
-
-            alert(`🙏 बहुत-बहुत धन्यवाद, ${donationData.donorName} जी!\n\nआपकी सहयोग राशि (₹${donationData.donationAmount}), UTR नंबर और पेमेंट का स्क्रीनशॉट सफलताપૂર્વक प्राप्त हो गया है।`);
-
-            donationForm.reset();
-        });
+    // 2. Firebase Firestore में डेटा सेव करना (बिना OTP के)
+    try {
+      await addDoc(collection(db, "donations"), {
+        donorName: document.getElementById('d-name').value,       // सहयोग कर्ता का नाम
+        mobile: mobile,                                           // मोबाइल नंबर
+        donationAmount: document.getElementById('d-amount').value,// सहयोग राशि (₹)
+        utrNumber: document.getElementById('d-utr').value,        // UTR / Transaction No.
+        timestamp: new Date()                                     // फॉर्म भरने का समय और तारीख
+      });
+      
+      // 3. सफलता का मैसेज दिखाना और फॉर्म को खाली करना
+      alert(`🙏 बहुत-बहुत धन्यवाद, ${document.getElementById('d-name').value} जी!\n\nआपकी सहयोग राशि का विवरण सफलतापूर्वक दर्ज कर लिया गया है।`);
+      e.target.reset(); // फॉर्म के सारे बॉक्स वापस खाली कर देगा
+      
+    } catch(error) {
+      console.error("Firebase Error: ", error);
+      alert("डेटा सेव करने में तकनीकी दिक्कत आई: " + error.message);
     }
+  });
     /* ========================================================
        10. BAL PRATIYOGITA SECTION LOGIC
        बाल प्रतियोगिता फॉर्म वैलिडेशन और पासवर्ड चेक
