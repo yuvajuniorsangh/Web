@@ -647,28 +647,27 @@
                         <input type="text" id="d-name" name="donorName" required>
                     </div>
 
-                   <!-- 1. मोबाइल नं और Send OTP बटन -->
+                   <!-- 1. मोबाइल नं और Send OTP बटन (Donation) -->
 <div class="input-group">
-    <label for="v-mobile">मोबाइल नं.:</label>
+    <label for="d-mobile">मोबाइल नं.:</label>
     <div class="otp-input-wrapper">
-        <input type="tel" id="v-mobile" name="mobile" required placeholder="10 अंकों का नंबर दर्ज करें">
-        <button type="button" id="send-otp-btn" class="otp-btn">Send OTP</button>
+        <input type="tel" id="d-mobile" name="mobile" required placeholder="10 अंकों का नंबर दर्ज करें">
+        <button type="button" id="d-send-otp-btn" class="otp-btn">Send OTP</button>
     </div>
 </div>
 
-<!-- 2. OTP वेरिफिकेशन बॉक्स (शुरू में यह छिपा रहेगा) -->
-<div class="input-group" id="otp-section" style="display: none;">
-    <label for="v-otp">OTP दर्ज करें:</label>
+<!-- 2. OTP वेरिफिकेशन बॉक्स (Donation) -->
+<div class="input-group" id="d-otp-section" style="display: none;">
+    <label for="d-otp">OTP दर्ज करें:</label>
     <div class="otp-input-wrapper">
-        <input type="number" id="v-otp" name="otp" placeholder="6-अंकों का OTP">
-        <button type="button" id="verify-otp-btn" class="otp-btn verify">Verify</button>
+        <input type="number" id="d-otp" name="otp" placeholder="6-अंकों का OTP">
+        <button type="button" id="d-verify-otp-btn" class="otp-btn verify">Verify</button>
     </div>
-    <!-- वेरिफिकेशन का स्टेटस (जैसे: Verified ✅) यहाँ दिखेगा -->
-    <span id="otp-status-msg" class="otp-status"></span>
+    <span id="d-otp-status-msg" class="otp-status"></span>
 </div>
 
-<!-- 3. Firebase Invisible reCAPTCHA के लिए खाली कंटेनर -->
-<div id="recaptcha-container"></div>
+<!-- 3. Firebase reCAPTCHA के लिए खाली कंटेनर (Donation) -->
+<div id="d-recaptcha-container"></div>
 
                     <!-- सहयोग की राशि -->
                     <div class="input-group">
@@ -734,5 +733,160 @@
 
     <!-- JavaScript फाइल को लिंक करना -->
     <script src="script.js"></script>
+   <!-- Firebase Backend: All Forms -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-app.js";
+  import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore.js";
+  import { getAuth, RecaptchaVerifier, signInWithPhoneNumber } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-auth.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyBRI36zVkKt6PShl0AWzyLWw_V92zpA4g4",
+    authDomain: "yuva-juniour-sangh.firebaseapp.com",
+    projectId: "yuva-juniour-sangh",
+    storageBucket: "yuva-juniour-sangh.firebasestorage.app",
+    messagingSenderId: "372832457105",
+    appId: "1:372832457105:web:3b5ce1fad0cbbc87b40a30",
+    measurementId: "G-X9V947QE96"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+  const auth = getAuth(app);
+  auth.useDeviceLanguage();
+
+  // ==========================================
+  // 1. कार्यकर्ता फॉर्म (Volunteer) का लॉजिक
+  // ==========================================
+  let volConfirmationResult = null;
+  let isVolVerified = false;
+
+  window.volRecaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', { 'size': 'normal' });
+
+  // OTP भेजना
+  document.getElementById('send-otp-btn').addEventListener('click', () => {
+    const mobile = document.getElementById('v-mobile').value;
+    if(mobile.length !== 10) return alert("कृपया 10 अंकों का सही मोबाइल नंबर डालें।");
+    
+    signInWithPhoneNumber(auth, "+91" + mobile, window.volRecaptchaVerifier)
+      .then((result) => {
+        volConfirmationResult = result;
+        document.getElementById('otp-section').style.display = 'block';
+        alert("OTP भेज दिया गया है!");
+      }).catch((error) => alert("OTP भेजने में समस्या आई।"));
+  });
+
+  // OTP वेरीफाई करना
+  document.getElementById('verify-otp-btn').addEventListener('click', () => {
+    const otp = document.getElementById('v-otp').value;
+    volConfirmationResult.confirm(otp).then(() => {
+      isVolVerified = true;
+      document.getElementById('otp-status-msg').innerText = "वेरीफाई हो गया ✅";
+      document.getElementById('otp-status-msg').style.color = "green";
+    }).catch(() => alert("गलत OTP!"));
+  });
+
+  // फॉर्म डेटा सेव करना
+  document.getElementById('volunteerRegistrationForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (!isVolVerified) return alert("पहले अपना मोबाइल नंबर वेरीफाई करें!");
+
+    const shifts = Array.from(document.querySelectorAll('input[name="shift"]:checked')).map(cb => cb.value);
+    const genderObj = document.querySelector('input[name="gender"]:checked');
+
+    try {
+      await addDoc(collection(db, "volunteers"), {
+        name: document.getElementById('v-name').value,
+        fatherName: document.getElementById('v-fname').value,
+        mobile: document.getElementById('v-mobile').value,
+        email: document.getElementById('v-email').value,
+        address: document.getElementById('v-address').value,
+        gender: genderObj ? genderObj.value : "",
+        availableShifts: shifts,
+        feedback: document.getElementById('v-feedback').value,
+        timestamp: new Date()
+      });
+      alert("कार्यकर्ता फॉर्म सफलतापूर्वक जमा हो गया!");
+      e.target.reset();
+    } catch(error) { alert("दिक्कत आई: " + error.message); }
+  });
+
+  // ==========================================
+  // 2. बाल प्रतियोगिता (Bal Pratiyogita) का लॉजिक
+  // ==========================================
+  document.getElementById('balPratiyogitaForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    // पासवर्ड चेक करना
+    const password = document.getElementById('bp-password').value;
+    if(password !== "Yuva2026") { // यहाँ आप अपना असली पासवर्ड डाल सकते हैं
+        return alert("पासवर्ड गलत है! यह फॉर्म केवल अधिकृत सदस्यों के लिए है।");
+    }
+
+    const competitions = Array.from(document.querySelectorAll('input[name="competition"]:checked')).map(cb => cb.value);
+    
+    try {
+      await addDoc(collection(db, "bal_pratiyogita_entries"), {
+        participantName: document.getElementById('bp-name').value,
+        fatherName: document.getElementById('bp-fname').value,
+        className: document.getElementById('bp-class').value,
+        mobile: document.getElementById('bp-mobile').value,
+        competitions: competitions,
+        songName: document.getElementById('bp-song') ? document.getElementById('bp-song').value : "",
+        timestamp: new Date()
+      });
+      alert("बाल प्रतियोगिता का फॉर्म सफलतापूर्वक जमा हो गया!");
+      e.target.reset();
+    } catch(error) { alert("दिक्कत आई: " + error.message); }
+  });
+
+  // ==========================================
+  // 3. सहयोग फॉर्म (Donation) का लॉजिक
+  // ==========================================
+  let donConfirmationResult = null;
+  let isDonVerified = false;
+
+  window.donRecaptchaVerifier = new RecaptchaVerifier(auth, 'd-recaptcha-container', { 'size': 'normal' });
+
+  // OTP भेजना
+  document.getElementById('d-send-otp-btn').addEventListener('click', () => {
+    const mobile = document.getElementById('d-mobile').value;
+    if(mobile.length !== 10) return alert("कृपया 10 अंकों का सही मोबाइल नंबर डालें।");
+    
+    signInWithPhoneNumber(auth, "+91" + mobile, window.donRecaptchaVerifier)
+      .then((result) => {
+        donConfirmationResult = result;
+        document.getElementById('d-otp-section').style.display = 'block';
+        alert("OTP भेज दिया गया है!");
+      }).catch((error) => alert("OTP भेजने में समस्या आई।"));
+  });
+
+  // OTP वेरीफाई करना
+  document.getElementById('d-verify-otp-btn').addEventListener('click', () => {
+    const otp = document.getElementById('d-otp').value;
+    donConfirmationResult.confirm(otp).then(() => {
+      isDonVerified = true;
+      document.getElementById('d-otp-status-msg').innerText = "वेरीफाई हो गया ✅";
+      document.getElementById('d-otp-status-msg').style.color = "green";
+    }).catch(() => alert("गलत OTP!"));
+  });
+
+  // फॉर्म डेटा सेव करना
+  document.getElementById('donationForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (!isDonVerified) return alert("पहले अपना मोबाइल नंबर वेरीफाई करें!");
+
+    try {
+      await addDoc(collection(db, "donations"), {
+        donorName: document.getElementById('d-name').value,
+        mobile: document.getElementById('d-mobile').value,
+        donationAmount: document.getElementById('d-amount').value,
+        utrNumber: document.getElementById('d-utr').value,
+        timestamp: new Date()
+      });
+      alert("आपका सहयोग सफलतापूर्वक दर्ज कर लिया गया है। धन्यवाद!");
+      e.target.reset();
+    } catch(error) { alert("दिक्कत आई: " + error.message); }
+  });
+</script>
 </body>
 </html>
