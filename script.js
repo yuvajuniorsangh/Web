@@ -283,7 +283,7 @@ document.addEventListener("DOMContentLoaded", function() {
             console.log("नया वोलेंटियर डेटा तैयार है:", volunteerData);
 
             // 4. यूज़र को सफलता का मैसेज (Success Alert) दिखाएं
-            alert(`🙏 जय श्री कृष्ण, ${volunteerData.name}!\n\nआपका वोलेंटियर रजिस्ट्रेशन फॉर्म सफलतापूर्वक भर गया है।\n\n(डेवलपर नोट: अभी यह डेटा कंसोल में प्रिंट हुआ है। अगले स्टेप में इसे Firebase डेटाबेस से जोड़ा जाएगा।)`);
+            alert(`🙏 जय श्री कृष्ण, ${volunteerData.name}!\n\nआपका वोलेंटियर रजिस्ट्रेशन फॉर्म सफलतापूर्वक भर गया है।`);
 
             // 5. फॉर्म सबमिट होने के बाद उसे खाली (Reset) कर दें
             volunteerForm.reset();
