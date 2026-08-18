@@ -398,27 +398,11 @@
                     </div>
 
                     <!-- 1. मोबाइल नं और Send OTP बटन -->
-<div class="input-group">
-    <label for="v-mobile">मोबाइल नं.:</label>
-    <div class="otp-input-wrapper">
-        <input type="tel" id="v-mobile" name="mobile" required placeholder="10 अंकों का नंबर दर्ज करें">
-        <button type="button" id="send-otp-btn" class="otp-btn">Send OTP</button>
-    </div>
-</div>
-
-<!-- 2. OTP वेरिफिकेशन बॉक्स (शुरू में यह छिपा रहेगा) -->
-<div class="input-group" id="otp-section" style="display: none;">
-    <label for="v-otp">OTP दर्ज करें:</label>
-    <div class="otp-input-wrapper">
-        <input type="number" id="v-otp" name="otp" placeholder="6-अंकों का OTP">
-        <button type="button" id="verify-otp-btn" class="otp-btn verify">Verify</button>
-    </div>
-    <!-- वेरिफिकेशन का स्टेटस (जैसे: Verified ✅) यहाँ दिखेगा -->
-    <span id="otp-status-msg" class="otp-status"></span>
-</div>
-
-<!-- 3. Firebase Invisible reCAPTCHA के लिए खाली कंटेनर -->
-<div id="recaptcha-container"></div>
+                    <!-- सिर्फ मोबाइल नंबर -->
+                    <div class="input-group">
+                        <label for="v-mobile">मोबाइल नं.: <span class="required">*</span></label>
+                        <input type="tel" id="v-mobile" name="mobile" required placeholder="10 अंकों का नंबर दर्ज करें" pattern="[0-9]{10}">
+                    </div>
 
                     <!-- ईमेल आईडी -->
                     <div class="input-group">
@@ -467,6 +451,12 @@
                     <div class="input-group">
                         <label for="v-feedback">Text area for feedback or suggestion:</label>
                         <textarea id="v-feedback" name="feedback" rows="4" placeholder="अपने सुझाव यहाँ लिखें..."></textarea>
+                    </div>
+                    <!-- कार्यकर्ता फॉर्म के लिए पासवर्ड -->
+                    <div class="input-group">
+                        <label for="v-password">Enter Password: <span class="required">*</span></label>
+                        <input type="password" id="v-password" name="password" placeholder="Enter password" required>
+                        <small style="color: #d84315; font-size: 0.85rem; font-weight: bold;">(यह पंजीकरण केवल अधिकृत सदस्यों के लिए है।)</small>
                     </div>
 
                     <!-- सबमिट बटन -->
@@ -646,29 +636,10 @@
                         <label for="d-name">नाम:</label>
                         <input type="text" id="d-name" name="donorName" required>
                     </div>
-
-                   <!-- 1. मोबाइल नं और Send OTP बटन (Donation) -->
-<div class="input-group">
-    <label for="d-mobile">मोबाइल नं.:</label>
-    <div class="otp-input-wrapper">
-        <input type="tel" id="d-mobile" name="mobile" required placeholder="10 अंकों का नंबर दर्ज करें">
-        <button type="button" id="d-send-otp-btn" class="otp-btn">Send OTP</button>
-    </div>
-</div>
-
-<!-- 2. OTP वेरिफिकेशन बॉक्स (Donation) -->
-<div class="input-group" id="d-otp-section" style="display: none;">
-    <label for="d-otp">OTP दर्ज करें:</label>
-    <div class="otp-input-wrapper">
-        <input type="number" id="d-otp" name="otp" placeholder="6-अंकों का OTP">
-        <button type="button" id="d-verify-otp-btn" class="otp-btn verify">Verify</button>
-    </div>
-    <span id="d-otp-status-msg" class="otp-status"></span>
-</div>
-
-<!-- 3. Firebase reCAPTCHA के लिए खाली कंटेनर (Donation) -->
-<div id="d-recaptcha-container"></div>
-
+        <div class="input-group">
+            <label for="d-mobile">मोबाइल नं.: <span class="required">*</span></label>
+            <input type="tel" id="d-mobile" name="mobile" required placeholder="10 अंकों का नंबर दर्ज करें" pattern="[0-9]{10}">
+        </div>
                     <!-- सहयोग की राशि -->
                     <div class="input-group">
                         <label for="d-amount">सहयोग की राशी (₹):</label>
