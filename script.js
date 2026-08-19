@@ -1,33 +1,33 @@
-// --- script.js : कृष्ण जन्माष्टमी महोत्सव 2026 ---
+// ============================================================================
+//   कृष्णा जन्माष्टमी महोत्सव 2026 - YUVA JUNIOR SANGH (MAIN SCRIPT FILE)
+// ============================================================================
 
-// 🔥 1. फायरबेस के सही इम्पोर्ट्स (गिनती करने वाले फीचर के साथ)
+/* ============================================================================
+   🌟 SECTION 1: FIREBASE SETUP & CONFIGURATION (Emergency Mode - No Photo)
+============================================================================ */
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
 import { getFirestore, collection, addDoc, getCountFromServer } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
-import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-storage.js";
 
 const firebaseConfig = {
-    apiKey: "AIzaSyBRI36zVkKt6PShl0AWzyLWw_V92zpA4g4",
-    authDomain: "yuva-juniour-sangh.firebaseapp.com",
-    projectId: "yuva-juniour-sangh",
-    storageBucket: "yuva-juniour-sangh.firebasestorage.app",
-    messagingSenderId: "372832457105",
-    appId: "1:372832457105:web:3b5ce1fad0cbbc87b40a30",
-    measurementId: "G-X9V947QE96"
+    apiKey: "AIzaSyAlZHINqrMVhsy0J9x2tOh2ud0LPcUdb6U",
+    authDomain: "yuva-junior-sangh.firebaseapp.com",
+    projectId: "yuva-junior-sangh",
+    storageBucket: "yuva-junior-sangh.firebasestorage.app",
+    messagingSenderId: "996220648084",
+    appId: "1:996220648084:web:402b92d84a8e64ccbd9281",
+    measurementId: "G-VH8T659YS5"
 };
 
-// फायरबेस चालू करें
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
-const storage = getStorage(app);
 
-// अब बाकी का DOM कोड शुरू होगा
+
 document.addEventListener("DOMContentLoaded", function() {
-    
-    console.log("वेबसाइट सफलतापूर्वक लोड हो गई है! जय श्री कृष्ण! 🙏");
+    console.log("वेबसाइट सफलतापूर्वक लोड हो गई है (Emergency Mode)! 🙏");
 
-    /* ========================================================
-       🌟 नया फीचर: बड़े अक्षरों वाला कस्टम सक्सेस पॉप-अप
-    ======================================================== */
+    /* ============================================================================
+       🌟 SECTION 2: GLOBAL FUNCTIONS (Loading Screen & Success Popup)
+    ============================================================================ */
     function showSuccessPopup(regNo, message) {
         const modal = document.createElement('div');
         modal.style.cssText = `position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); display: flex; align-items: center; justify-content: center; z-index: 99999; padding: 20px;`;
@@ -47,9 +47,7 @@ document.addEventListener("DOMContentLoaded", function() {
         document.body.appendChild(modal);
         document.getElementById('closePopupBtn').addEventListener('click', () => { modal.remove(); });
     }
-    /* ========================================================
-       🌟 नया फीचर: डेटा सेव होते समय लोडिंग (Please Wait) स्क्रीन
-    ======================================================== */
+
     function showLoading() {
         if(document.getElementById('global-loader')) return;
         const loader = document.createElement('div');
@@ -69,10 +67,139 @@ document.addEventListener("DOMContentLoaded", function() {
         if (loader) loader.remove();
     }
 
-    /* ========================================================
-       🌟 नया फीचर: पेमेंट QR के नीचे महत्वपूर्ण सूचना बॉक्स जोड़ना
-       यह कोड अपने आप QR इमेज के नीचे सुंदर बॉक्स बना देगा
-    ======================================================== */
+
+    /* ============================================================================
+       🌟 SECTION 3: FORM LOGIC (VOLUNTEER, DONATION, BAL PRATIYOGITA)
+    ============================================================================ */
+
+    // 1. वॉलंटियर फॉर्म
+    const volunteerForm = document.getElementById('volunteerRegistrationForm');
+    if (volunteerForm) {
+        volunteerForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const vPassword = document.getElementById('v-password').value;
+            if(vPassword !== "101PRASH") { alert("पासवर्ड गलत है!"); return; }
+            const mobile = document.getElementById('v-mobile').value;
+            if(mobile.length !== 10) { alert("⚠️ 10 अंकों का सही मोबाइल नंबर डालें।"); return; }
+            const shifts = Array.from(document.querySelectorAll('input[name="shift"]:checked')).map(cb => cb.value);
+            if(shifts.length === 0) { alert("⚠️ कम से कम एक शिफ्ट चुनें!"); return; }
+            const genderObj = document.querySelector('input[name="gender"]:checked');
+            const gender = genderObj ? genderObj.value : "नहीं बताया";
+
+            try {
+                showLoading();
+                const collRef = collection(db, "volunteers");
+                const snapshot = await getCountFromServer(collRef);
+                const count = snapshot.data().count;
+                const regNo = `VOL-2026/${count + 1}`;
+
+                await addDoc(collRef, {
+                    registrationNo: regNo,
+                    name: document.getElementById('v-name').value,
+                    fatherName: document.getElementById('v-fname').value,
+                    mobile: mobile,
+                    email: document.getElementById('v-email').value,
+                    address: document.getElementById('v-address').value,
+                    gender: gender,
+                    availableShifts: shifts,
+                    feedback: document.getElementById('v-feedback').value,
+                    photoUrl: "Photo upload disabled temporarily",
+                    timestamp: new Date()
+                });
+            
+                hideLoading();
+                showSuccessPopup(regNo, `जय श्री कृष्ण, ${document.getElementById('v-name').value}! आपका फॉर्म जमा हो गया है।`);
+                e.target.reset();
+            } catch(error) {
+                hideLoading();
+                alert("डेटा सेव करने में दिक्कत आई: " + error.message);
+            }
+        });
+    }
+
+    // 2. सहयोग फॉर्म 
+    const donationForm = document.getElementById('donationForm');
+    if (donationForm) {
+        donationForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const mobile = document.getElementById('d-mobile').value;
+            if(mobile.length !== 10) { alert("⚠️ 10 अंकों का सही मोबाइल नंबर डालें।"); return; }
+
+            try {
+                showLoading();
+                await addDoc(collection(db, "donations"), {
+                    donorName: document.getElementById('d-name').value,
+                    mobile: mobile,
+                    donationAmount: document.getElementById('d-amount').value,
+                    utrNumber: document.getElementById('d-utr').value,
+                    receiptUrl: "Receipt upload disabled temporarily",
+                    timestamp: new Date()
+                });
+            
+                hideLoading();
+                alert(`🙏 धन्यवाद, ${document.getElementById('d-name').value} जी!\nआपकी सहयोग राशि का विवरण दर्ज कर लिया गया है।`);
+                e.target.reset();
+            } catch(error) {
+                hideLoading();
+                alert("डेटा सेव करने में दिक्कत आई: " + error.message);
+            }
+        });
+    }
+
+    // 3. बाल प्रतियोगिता 
+    const balPratiyogitaForm = document.getElementById('balPratiyogitaForm');
+    const danceCheckbox = document.getElementById('dance-checkbox');
+    const songNameGroup = document.getElementById('song-name-group');
+
+    if (balPratiyogitaForm) {
+        if (danceCheckbox) {
+            danceCheckbox.addEventListener('change', function() {
+                if (this.checked) { songNameGroup.style.display = 'block'; } 
+                else { songNameGroup.style.display = 'none'; document.getElementById('bp-song').value = ''; }
+            });
+        }
+
+        balPratiyogitaForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const compCheckboxes = Array.from(balPratiyogitaForm.querySelectorAll('input[name="competition"]:checked')).map(cb => cb.value);
+            if (compCheckboxes.length === 0) { alert("⚠️ कम से कम एक प्रतियोगिता चुनें!"); return; }
+            const classInput = parseInt(document.getElementById('bp-class').value);
+            if (classInput < 0 || classInput > 7) { alert("⚠️ केवल कक्षा 0 से 7 तक के बच्चे भाग ले सकते हैं!"); return; }
+            const passwordInput = document.getElementById('bp-password').value;
+            if (passwordInput !== '108PRASH') { alert("पासवर्ड गलत है!"); return; }
+
+            try {
+                showLoading();
+                const collRef = collection(db, "bal_pratiyogita_entries");
+                const snapshot = await getCountFromServer(collRef);
+                const count = snapshot.data().count;
+                const regNo = `COM-2026/${count + 1}`;
+
+                await addDoc(collRef, {
+                    registrationNo: regNo,
+                    participantName: document.getElementById('bp-name').value,
+                    fatherName: document.getElementById('bp-fname').value,
+                    className: classInput,
+                    mobile: document.getElementById('bp-mobile').value,
+                    competitions: compCheckboxes,
+                    songName: document.getElementById('bp-song') ? document.getElementById('bp-song').value : "",
+                    timestamp: new Date()
+                });
+                
+                hideLoading();
+                showSuccessPopup(regNo, `${document.getElementById('bp-name').value} का फॉर्म सफलतापूर्वक जमा हो गया है!`);
+                balPratiyogitaForm.reset();
+                if(songNameGroup) songNameGroup.style.display = 'none';
+            } catch(error) { 
+                hideLoading();
+                alert("डेटा सेव करने में दिक्कत आई: " + error.message); 
+            }
+        });
+    }
+
+    /* ============================================================================
+       🌟 SECTION 4: PAYMENT ALERT BOX (पेमेंट QR के नीचे सूचना)
+    ============================================================================ */
     const qrImage = document.querySelector('#donationForm img, .payment-qr-img, [src*="qr"]');
     if (qrImage && !document.querySelector('.payment-alert')) {
         const alertBox = document.createElement('div');
@@ -98,9 +225,9 @@ document.addEventListener("DOMContentLoaded", function() {
         qrImage.parentNode.insertBefore(alertBox, qrImage.nextSibling);
     }
 
-    /* ========================================================
-       2. GLOBAL / NAVIGATION LOGIC (Scrollspy)
-    ======================================================== */
+    /* ============================================================================
+       🌟 SECTION 5: SCROLLSPY (Navigation Highlights)
+    ============================================================================ */
     const sections = document.querySelectorAll("section");
     const navLinks = document.querySelectorAll("nav ul li a");
 
@@ -121,9 +248,11 @@ document.addEventListener("DOMContentLoaded", function() {
         });
     });
 
-    /* ========================================================
-       3. HOME SECTION LOGIC (Auto-Scroll Slider)
-    ======================================================== */
+    /* ============================================================================
+       🌟 SECTION 6: UI LOGIC (SLIDERS, LIGHTBOX, ABOUT ANIMATIONS)
+    ============================================================================ */
+    
+    // 1. Home Auto-Scroll Slider
     let slideIndex = 0;
     function showSlides() {
         let i;
@@ -140,9 +269,7 @@ document.addEventListener("DOMContentLoaded", function() {
     }
     showSlides();
 
-    /* ========================================================
-       4. BHAGWAAN KRISHNA SECTION LOGIC (Lightbox Feature)
-    ======================================================== */
+    // 2. Lightbox (Bhagwaan Krishna & Gallery)
     const gridItems = document.querySelectorAll('.grid-item');
     const lightboxModal = document.getElementById('lightbox-modal');
     const lightboxText = document.getElementById('lightbox-text');
@@ -160,23 +287,9 @@ document.addEventListener("DOMContentLoaded", function() {
                 lightboxModal.classList.add('active');
             });
         });
-
-        lightboxClose.addEventListener('click', () => {
-            lightboxModal.classList.remove('active');
-        });
-
-        lightboxModal.addEventListener('click', (e) => {
-            if (e.target === lightboxModal) {
-                lightboxModal.classList.remove('active');
-            }
-        });
     }
 
-    /* ========================================================
-       5. GALLERY SECTION LOGIC (Lightbox Feature)
-    ======================================================== */
     const galleryCards = document.querySelectorAll('.memory-card');
-
     if (galleryCards.length > 0 && lightboxModal) {
         galleryCards.forEach(card => {
             card.addEventListener('click', () => {
@@ -200,9 +313,19 @@ document.addEventListener("DOMContentLoaded", function() {
         });
     }
 
-    /* ========================================================
-       6. ABOUT US SECTION LOGIC (Scroll Reveal Animation)
-    ======================================================== */
+    if (lightboxModal && lightboxClose) {
+        lightboxClose.addEventListener('click', () => {
+            lightboxModal.classList.remove('active');
+        });
+
+        lightboxModal.addEventListener('click', (e) => {
+            if (e.target === lightboxModal) {
+                lightboxModal.classList.remove('active');
+            }
+        });
+    }
+
+    // 3. About Us Scroll Reveal Animation
     const aboutBoxes = document.querySelectorAll('.history-box, .founders-box');
     if (aboutBoxes.length > 0) {
         const observer = new IntersectionObserver((entries) => {
@@ -216,191 +339,8 @@ document.addEventListener("DOMContentLoaded", function() {
 
         aboutBoxes.forEach(box => { observer.observe(box); });
     }
-   
-    /* ========================================================
-       7. वॉलंटियर फॉर्म (Custom ID, Photo Storage & Loading के साथ)
-    ======================================================== */
-    const volunteerForm = document.getElementById('volunteerRegistrationForm');
-    if (volunteerForm) {
-        volunteerForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            const vPassword = document.getElementById('v-password').value;
-            if(vPassword !== "101PRASH") {
-                alert("पासवर्ड गलत है! यह फॉर्म केवल अधिकृत सदस्यों के लिए है।"); return;
-            }
-            const mobile = document.getElementById('v-mobile').value;
-            if(mobile.length !== 10) {
-                alert("⚠️ कृपया 10 अंकों का सही मोबाइल नंबर डालें।"); return;
-            }
-            const shifts = Array.from(document.querySelectorAll('input[name="shift"]:checked')).map(cb => cb.value);
-            if(shifts.length === 0) {
-                alert("⚠️ कृपया कम से कम एक शिफ्ट ज़रूर चुनें!"); return;
-            }
-            const genderObj = document.querySelector('input[name="gender"]:checked');
-            const gender = genderObj ? genderObj.value : "नहीं बताया";
-            const photoFile = document.getElementById('v-photo').files[0];
 
-            try {
-                showLoading(); // 👉 1. फॉर्म सबमिट होते ही सबसे पहले लोडिंग चालू करें
-
-                // 2. ऑटोमैटिक रजिस्ट्रेशन नंबर जेनरेट करना
-                const collRef = collection(db, "volunteers");
-                const snapshot = await getCountFromServer(collRef);
-                const count = snapshot.data().count;
-                const regNo = `VOL-2026/${count + 1}`; // नया रजिस्ट्रेशन नंबर
-
-                // 3. फोटो अपलोड करना
-                let photoUrl = "";
-                if (photoFile) {
-                    const storageRef = ref(storage, 'volunteer_photos/' + Date.now() + '_' + photoFile.name);
-                    const snap = await uploadBytes(storageRef, photoFile);
-                    photoUrl = await getDownloadURL(snap.ref);
-                }
-
-                // 4. डेटा सेव करना
-                await addDoc(collRef, {
-                    registrationNo: regNo,
-                    name: document.getElementById('v-name').value,
-                    fatherName: document.getElementById('v-fname').value,
-                    mobile: mobile,
-                    email: document.getElementById('v-email').value,
-                    address: document.getElementById('v-address').value,
-                    gender: gender,
-                    availableShifts: shifts,
-                    feedback: document.getElementById('v-feedback').value,
-                    photoUrl: photoUrl,
-                    timestamp: new Date()
-                });
-            
-                hideLoading(); // 👉 5. डेटा सुरक्षित सेव होने के बाद लोडिंग बंद करें
-                
-                // 6. शानदार पॉप-अप दिखाना
-                showSuccessPopup(regNo, `जय श्री कृष्ण, ${document.getElementById('v-name').value}! आपका कार्यकर्ता फॉर्म जमा हो गया है।`);
-                e.target.reset();
-            
-            } catch(error) {
-                hideLoading(); // 👉 7. अगर कोई एरर आए, तब भी लोडिंग बंद करें
-                console.error("Firebase Error: ", error);
-                alert("डेटा सेव करने में तकनीकी दिक्कत आई: " + error.message);
-            }
-        });
-    }
-
-    /* ========================================================
-       8. सहयोग फॉर्म (स्क्रीनशॉट स्टोरेज और लोडिंग के साथ)
-    ======================================================== */
-    const donationForm = document.getElementById('donationForm');
-    if (donationForm) {
-        donationForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            const mobile = document.getElementById('d-mobile').value;
-            if(mobile.length !== 10) {
-                alert("⚠️ कृपया 10 अंकों का सही मोबाइल नंबर डालें।");
-                return;
-            }
-
-            const receiptFile = document.getElementById('donation-receipt').files[0];
-            let receiptUrl = "";
-
-            try {
-                showLoading(); // 👉 1. फॉर्म सबमिट होते ही सबसे पहले लोडिंग चालू करें
-
-                // पेमेंट का स्क्रीनशॉट Storage में अपलोड करें
-                if (receiptFile) {
-                    const storageRef = ref(storage, 'donation_receipts/' + Date.now() + '_' + receiptFile.name);
-                    const snapshot = await uploadBytes(storageRef, receiptFile);
-                    receiptUrl = await getDownloadURL(snapshot.ref);
-                }
-
-                // डेटाबेस में टेक्स्ट और स्क्रीनशॉट का लिंक सेव करें
-                await addDoc(collection(db, "donations"), {
-                    donorName: document.getElementById('d-name').value,
-                    mobile: mobile,
-                    donationAmount: document.getElementById('d-amount').value,
-                    utrNumber: document.getElementById('d-utr').value,
-                    receiptUrl: receiptUrl,
-                    timestamp: new Date()
-                });
-            
-                hideLoading(); // 👉 2. डेटा सुरक्षित सेव होने के बाद लोडिंग बंद करें
-                
-                alert(`🙏 बहुत-बहुत धन्यवाद, ${document.getElementById('d-name').value} जी!\n\nआपकी सहयोग राशि का विवरण सफलतापूर्वक दर्ज कर लिया गया है।`);
-                e.target.reset();
-            
-            } catch(error) {
-                hideLoading(); // 👉 3. अगर कोई एरर आए, तब भी लोडिंग बंद करें
-                console.error("Firebase Error: ", error);
-                alert("डेटा सेव करने में तकनीकी दिक्कत आई: " + error.message);
-            }
-        });
-    }
-   /* ========================================================
-       10. BAL PRATIYOGITA SECTION LOGIC (Custom ID & Loading के साथ)
-    ======================================================== */
-    const balPratiyogitaForm = document.getElementById('balPratiyogitaForm');
-    const danceCheckbox = document.getElementById('dance-checkbox');
-    const songNameGroup = document.getElementById('song-name-group');
-
-    if (balPratiyogitaForm) {
-        if (danceCheckbox) {
-            danceCheckbox.addEventListener('change', function() {
-                if (this.checked) { songNameGroup.style.display = 'block'; } 
-                else { songNameGroup.style.display = 'none'; document.getElementById('bp-song').value = ''; }
-            });
-        }
-
-        balPratiyogitaForm.addEventListener('submit', async function(e) {
-            e.preventDefault();
-
-            const compCheckboxes = Array.from(balPratiyogitaForm.querySelectorAll('input[name="competition"]:checked')).map(cb => cb.value);
-            if (compCheckboxes.length === 0) { alert("⚠️ कृपया कम से कम एक प्रतियोगिता ज़रूर चुनें!"); return; }
-            
-            const classInput = parseInt(document.getElementById('bp-class').value);
-            if (classInput < 0 || classInput > 7) { alert("⚠️ इस प्रतियोगिता में केवल कक्षा 0 से 7 तक के बच्चे ही भाग ले सकते हैं!"); return; }
-            
-            const passwordInput = document.getElementById('bp-password').value;
-            if (passwordInput !== '108PRASH') { alert("पासवर्ड गलत है! यह फॉर्म केवल अधिकृत सदस्यों के लिए है।"); return; }
-
-            try {
-                showLoading(); // 👉 1. फॉर्म सबमिट होते ही सबसे पहले लोडिंग चालू करें
-
-                // 2. ऑटोमैटिक रजिस्ट्रेशन नंबर जेनरेट करना
-                const collRef = collection(db, "bal_pratiyogita_entries");
-                const snapshot = await getCountFromServer(collRef);
-                const count = snapshot.data().count;
-                const regNo = `COM-2026/${count + 1}`; // नया रजिस्ट्रेशन नंबर
-
-                // 3. डेटा सेव करना
-                await addDoc(collRef, {
-                    registrationNo: regNo,
-                    participantName: document.getElementById('bp-name').value,
-                    fatherName: document.getElementById('bp-fname').value,
-                    className: classInput,
-                    mobile: document.getElementById('bp-mobile').value,
-                    competitions: compCheckboxes,
-                    songName: document.getElementById('bp-song') ? document.getElementById('bp-song').value : "",
-                    timestamp: new Date()
-                });
-                
-                hideLoading(); // 👉 4. डेटा सुरक्षित सेव होने के बाद लोडिंग बंद करें
-                
-                // 5. शानदार पॉप-अप दिखाना
-                showSuccessPopup(regNo, `${document.getElementById('bp-name').value} का बाल प्रतियोगिता फॉर्म सफलतापूर्वक जमा हो गया है!`);
-                balPratiyogitaForm.reset();
-                if(songNameGroup) songNameGroup.style.display = 'none';
-
-            } catch(error) { 
-                hideLoading(); // 👉 6. अगर कोई एरर आए, तब भी लोडिंग बंद करें
-                alert("डेटा सेव करने में तकनीकी दिक्कत आई: " + error.message); 
-            }
-        });
-    }
-
-    /* ========================================================
-       BAL PRATIYOGITA SLIDER LOGIC (With Pause/Play Feature)
-    ======================================================== */
+    // 4. Bal Pratiyogita Slider
     let bpSlideIndex = 0;
     let bpTimer; 
     let isBpPaused = false; 
@@ -441,9 +381,10 @@ document.addEventListener("DOMContentLoaded", function() {
     }
     showBpSlides();
 
-    /* ========================================================
-       11. SHARE BUTTON LOGIC (Share First, Copy if Failed)
-    ======================================================== */
+
+    /* ============================================================================
+       🌟 SECTION 7: SHARE BUTTON LOGIC
+    ============================================================================ */
     window.shareSection = function(title, text, sectionId) {
         const shareUrl = window.location.origin + window.location.pathname + sectionId;
         const shareContent = text + "\n\n" + shareUrl;
@@ -473,9 +414,9 @@ document.addEventListener("DOMContentLoaded", function() {
         }
     };
     
-    /* ========================================================
-       HAMBURGER MENU LOGIC (Mobile Navigation)
-    ======================================================== */
+    /* ============================================================================
+       🌟 SECTION 8: MOBILE NAVIGATION (HAMBURGER MENU)
+    ============================================================================ */
     const hamburgerBtn = document.getElementById('hamburger-btn');
     const navMenu = document.getElementById('nav-menu');
 

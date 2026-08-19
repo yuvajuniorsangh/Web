@@ -410,11 +410,11 @@
                         <input type="email" id="v-email" name="email" required>
                     </div>
 
-                    <!-- फोटो अपलोड -->
-                    <div class="input-group">
-                        <label for="v-photo">फोटो (choose from device): <span class="required">*</span></label>
-                        <input type="file" id="v-photo" name="photo" accept="image/*" required>
-                    </div>
+                    <!-- फोटो अपलोड (फिलहाल Emergency Mode में इसे छुपा दिया गया है और required हटा दिया गया है) -->
+                <div class="input-group" style="display: none;">
+                    <label for="v-photo">फोटो (choose from device):</label>
+                    <input type="file" id="v-photo" name="photo" accept="image/*">
+                </div>
 
                     <!-- पूरा पता -->
                     <div class="input-group">
@@ -655,10 +655,10 @@
                         <label for="d-utr">UTR No / Transaction No:</label>
                         <input type="text" id="d-utr" name="utrNumber" required>
                     </div>
-                    <!-- पेमेंट का स्क्रीनशॉट या रसीद अपलोड करने के लिए -->
-<div class="input-group">
+                    <!-- पेमेंट का स्क्रीनशॉट या रसीद (फिलहाल Emergency Mode में इसे छुपा दिया गया है और required हटा दिया गया है) -->
+<div class="input-group" style="display: none;">
     <label for="donation-receipt">पेमेंट का स्क्रीनशॉट / रसीद (Photo):</label>
-    <input type="file" id="donation-receipt" name="receiptPhoto" accept="image/*" required>
+    <input type="file" id="donation-receipt" name="receiptPhoto" accept="image/*">
     <small style="color: #666; font-size: 0.85rem;">कृपया JPG, PNG या JPEG फॉर्मेट में स्क्रीनशॉट अपलोड करें।</small>
 </div>
 
