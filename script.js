@@ -47,6 +47,27 @@ document.addEventListener("DOMContentLoaded", function() {
         document.body.appendChild(modal);
         document.getElementById('closePopupBtn').addEventListener('click', () => { modal.remove(); });
     }
+    /* ========================================================
+       🌟 नया फीचर: डेटा सेव होते समय लोडिंग (Please Wait) स्क्रीन
+    ======================================================== */
+    function showLoading() {
+        if(document.getElementById('global-loader')) return;
+        const loader = document.createElement('div');
+        loader.id = 'global-loader';
+        loader.style.cssText = `position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 999999;`;
+        loader.innerHTML = `
+            <div style="width: 50px; height: 50px; border: 5px solid #f3f3f3; border-top: 5px solid #d84315; border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 15px;"></div>
+            <h3 style="color: white; font-family: sans-serif; margin: 0; font-size: 22px;">⏳ कृपया प्रतीक्षा करें...</h3>
+            <p style="color: #ffcc80; font-family: sans-serif; margin-top: 8px; font-size: 15px;">डेटा सेव हो रहा है, कृपया बैक (Back) न करें!</p>
+            <style>@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }</style>
+        `;
+        document.body.appendChild(loader);
+    }
+
+    function hideLoading() {
+        const loader = document.getElementById('global-loader');
+        if (loader) loader.remove();
+    }
 
     /* ========================================================
        🌟 नया फीचर: पेमेंट QR के नीचे महत्वपूर्ण सूचना बॉक्स जोड़ना
@@ -197,7 +218,7 @@ document.addEventListener("DOMContentLoaded", function() {
     }
    
     /* ========================================================
-       7. वॉलंटियर फॉर्म (Custom ID & Photo Storage के साथ)
+       7. वॉलंटियर फॉर्म (Custom ID, Photo Storage & Loading के साथ)
     ======================================================== */
     const volunteerForm = document.getElementById('volunteerRegistrationForm');
     if (volunteerForm) {
@@ -221,13 +242,15 @@ document.addEventListener("DOMContentLoaded", function() {
             const photoFile = document.getElementById('v-photo').files[0];
 
             try {
-                // 1. ऑटोमैटिक रजिस्ट्रेशन नंबर जेनरेट करना
+                showLoading(); // 👉 1. फॉर्म सबमिट होते ही सबसे पहले लोडिंग चालू करें
+
+                // 2. ऑटोमैटिक रजिस्ट्रेशन नंबर जेनरेट करना
                 const collRef = collection(db, "volunteers");
                 const snapshot = await getCountFromServer(collRef);
                 const count = snapshot.data().count;
                 const regNo = `VOL-2026/${count + 1}`; // नया रजिस्ट्रेशन नंबर
 
-                // 2. फोटो अपलोड करना
+                // 3. फोटो अपलोड करना
                 let photoUrl = "";
                 if (photoFile) {
                     const storageRef = ref(storage, 'volunteer_photos/' + Date.now() + '_' + photoFile.name);
@@ -235,7 +258,7 @@ document.addEventListener("DOMContentLoaded", function() {
                     photoUrl = await getDownloadURL(snap.ref);
                 }
 
-                // 3. डेटा सेव करना
+                // 4. डेटा सेव करना
                 await addDoc(collRef, {
                     registrationNo: regNo,
                     name: document.getElementById('v-name').value,
@@ -250,11 +273,14 @@ document.addEventListener("DOMContentLoaded", function() {
                     timestamp: new Date()
                 });
             
-                // 4. शानदार पॉप-अप दिखाना
+                hideLoading(); // 👉 5. डेटा सुरक्षित सेव होने के बाद लोडिंग बंद करें
+                
+                // 6. शानदार पॉप-अप दिखाना
                 showSuccessPopup(regNo, `जय श्री कृष्ण, ${document.getElementById('v-name').value}! आपका कार्यकर्ता फॉर्म जमा हो गया है।`);
                 e.target.reset();
             
             } catch(error) {
+                hideLoading(); // 👉 7. अगर कोई एरर आए, तब भी लोडिंग बंद करें
                 console.error("Firebase Error: ", error);
                 alert("डेटा सेव करने में तकनीकी दिक्कत आई: " + error.message);
             }
@@ -262,7 +288,7 @@ document.addEventListener("DOMContentLoaded", function() {
     }
 
     /* ========================================================
-       8. सहयोग फॉर्म (स्क्रीनशॉट स्टोरेज के साथ)
+       8. सहयोग फॉर्म (स्क्रीनशॉट स्टोरेज और लोडिंग के साथ)
     ======================================================== */
     const donationForm = document.getElementById('donationForm');
     if (donationForm) {
@@ -279,6 +305,8 @@ document.addEventListener("DOMContentLoaded", function() {
             let receiptUrl = "";
 
             try {
+                showLoading(); // 👉 1. फॉर्म सबमिट होते ही सबसे पहले लोडिंग चालू करें
+
                 // पेमेंट का स्क्रीनशॉट Storage में अपलोड करें
                 if (receiptFile) {
                     const storageRef = ref(storage, 'donation_receipts/' + Date.now() + '_' + receiptFile.name);
@@ -292,21 +320,24 @@ document.addEventListener("DOMContentLoaded", function() {
                     mobile: mobile,
                     donationAmount: document.getElementById('d-amount').value,
                     utrNumber: document.getElementById('d-utr').value,
-                    receiptUrl: receiptUrl, // यहाँ स्क्रीनशॉट का लिंक सेव होगा
+                    receiptUrl: receiptUrl,
                     timestamp: new Date()
                 });
             
+                hideLoading(); // 👉 2. डेटा सुरक्षित सेव होने के बाद लोडिंग बंद करें
+                
                 alert(`🙏 बहुत-बहुत धन्यवाद, ${document.getElementById('d-name').value} जी!\n\nआपकी सहयोग राशि का विवरण सफलतापूर्वक दर्ज कर लिया गया है।`);
                 e.target.reset();
             
             } catch(error) {
+                hideLoading(); // 👉 3. अगर कोई एरर आए, तब भी लोडिंग बंद करें
                 console.error("Firebase Error: ", error);
                 alert("डेटा सेव करने में तकनीकी दिक्कत आई: " + error.message);
             }
         });
     }
-    /* ========================================================
-       10. BAL PRATIYOGITA SECTION LOGIC (Custom ID के साथ)
+   /* ========================================================
+       10. BAL PRATIYOGITA SECTION LOGIC (Custom ID & Loading के साथ)
     ======================================================== */
     const balPratiyogitaForm = document.getElementById('balPratiyogitaForm');
     const danceCheckbox = document.getElementById('dance-checkbox');
@@ -333,13 +364,15 @@ document.addEventListener("DOMContentLoaded", function() {
             if (passwordInput !== '108PRASH') { alert("पासवर्ड गलत है! यह फॉर्म केवल अधिकृत सदस्यों के लिए है।"); return; }
 
             try {
-                // 1. ऑटोमैटिक रजिस्ट्रेशन नंबर जेनरेट करना
+                showLoading(); // 👉 1. फॉर्म सबमिट होते ही सबसे पहले लोडिंग चालू करें
+
+                // 2. ऑटोमैटिक रजिस्ट्रेशन नंबर जेनरेट करना
                 const collRef = collection(db, "bal_pratiyogita_entries");
                 const snapshot = await getCountFromServer(collRef);
                 const count = snapshot.data().count;
                 const regNo = `COM-2026/${count + 1}`; // नया रजिस्ट्रेशन नंबर
 
-                // 2. डेटा सेव करना
+                // 3. डेटा सेव करना
                 await addDoc(collRef, {
                     registrationNo: regNo,
                     participantName: document.getElementById('bp-name').value,
@@ -351,12 +384,15 @@ document.addEventListener("DOMContentLoaded", function() {
                     timestamp: new Date()
                 });
                 
-                // 3. शानदार पॉप-अप दिखाना
+                hideLoading(); // 👉 4. डेटा सुरक्षित सेव होने के बाद लोडिंग बंद करें
+                
+                // 5. शानदार पॉप-अप दिखाना
                 showSuccessPopup(regNo, `${document.getElementById('bp-name').value} का बाल प्रतियोगिता फॉर्म सफलतापूर्वक जमा हो गया है!`);
                 balPratiyogitaForm.reset();
                 if(songNameGroup) songNameGroup.style.display = 'none';
 
             } catch(error) { 
+                hideLoading(); // 👉 6. अगर कोई एरर आए, तब भी लोडिंग बंद करें
                 alert("डेटा सेव करने में तकनीकी दिक्कत आई: " + error.message); 
             }
         });
