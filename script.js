@@ -1,33 +1,76 @@
 // --- script.js : कृष्ण जन्माष्टमी महोत्सव 2026 ---
 
-// 1. जब वेबसाइट का पूरा ढांचा (HTML) लोड हो जाए, तभी यह कोड चलेगा
+// 🌟 फायरबेस इंपोर्ट और कॉन्फ़िगरेशन को फ़ाइल में सबसे ऊपर रखें
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
+import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+// 👉 1. यह नई लाइन यहाँ इम्पोर्ट के नीचे जोड़ें:
+import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-storage.js";
+
+const firebaseConfig = {
+    apiKey: "AIzaSyBRI36zVkKt6PShl0AWzyLWw_V92zpA4g4",
+    authDomain: "yuva-juniour-sangh.firebaseapp.com",
+    projectId: "yuva-juniour-sangh",
+    storageBucket: "yuva-juniour-sangh.firebasestorage.app",
+    messagingSenderId: "372832457105",
+    appId: "1:372832457105:web:3b5ce1fad0cbbc87b40a30",
+    measurementId: "G-X9V947QE96"
+};
+
+// फायरबेस को एक बार ग्लोबल शुरू करें ताकि सभी फॉर्म्स को 'db' मिल सके
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+// 👉 2. यह लाइन db के ठीक नीचे जोड़ दें:
+const storage = getStorage(app);
+
+// अब बाकी का DOM कोड शुरू होगा
 document.addEventListener("DOMContentLoaded", function() {
     
-    // कंसोल में चेक करने के लिए कि JS सही से जुड़ गया है
     console.log("वेबसाइट सफलतापूर्वक लोड हो गई है! जय श्री कृष्ण! 🙏");
 
     /* ========================================================
+       🌟 नया फीचर: पेमेंट QR के नीचे महत्वपूर्ण सूचना बॉक्स जोड़ना
+       यह कोड अपने आप QR इमेज के नीचे सुंदर बॉक्स बना देगा
+    ======================================================== */
+    const qrImage = document.querySelector('#donationForm img, .payment-qr-img, [src*="qr"]');
+    if (qrImage && !document.querySelector('.payment-alert')) {
+        const alertBox = document.createElement('div');
+        alertBox.className = 'payment-alert';
+        alertBox.style.cssText = `
+            background-color: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeeba;
+            padding: 15px;
+            margin: 15px auto;
+            width: 90%;
+            max-width: 400px;
+            border-radius: 8px;
+            font-size: 14px;
+            line-height: 1.5;
+            text-align: left;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        `;
+        alertBox.innerHTML = `
+            <strong style="color: #d84315; font-size: 16px; display: inline-block; margin-bottom: 5px;">⚠️ महत्वपूर्ण सूचना:</strong><br>
+            कृपया पेमेंट करने के बाद उसका <b>स्क्रीनशॉट (SS)</b> ज़रूर लें और नीचे दिया गया <b>फॉर्म अवश्य भरें</b>। यह QR कोड सीधे तौर पर संघ का नहीं है, बल्कि संघ के एक सदस्य का व्यक्तिगत QR कोड है। इसलिए, आपके सहयोग की सही पुष्टि के लिए फॉर्म भरना अनिवार्य है।
+        `;
+        qrImage.parentNode.insertBefore(alertBox, qrImage.nextSibling);
+    }
+
+    /* ========================================================
        2. GLOBAL / NAVIGATION LOGIC (Scrollspy)
-       यूज़र जिस सेक्शन पर होगा, मेनू में वह लिंक हाईलाइट हो जाएगा
     ======================================================== */
     const sections = document.querySelectorAll("section");
     const navLinks = document.querySelectorAll("nav ul li a");
 
     window.addEventListener("scroll", () => {
         let currentSection = "";
-
-        // चेक करें कि स्क्रीन पर अभी कौन सा सेक्शन दिख रहा है
         sections.forEach(section => {
             const sectionTop = section.offsetTop;
-            const sectionHeight = section.clientHeight;
-            
-            // अगर हम स्क्रॉल करके उस सेक्शन के हिस्से में पहुँच गए हैं
-            if (pageYOffset >= (sectionTop - 150)) { 
+            if (window.pageYOffset >= (sectionTop - 150)) { 
                 currentSection = section.getAttribute("id");
             }
         });
 
-        // मेनू के सभी लिंक्स से 'active' डिज़ाइन हटाएं और सिर्फ सही वाले पर लगाएं
         navLinks.forEach(link => {
             link.classList.remove("active");
             if (link.getAttribute("href").includes(currentSection)) {
@@ -37,43 +80,26 @@ document.addEventListener("DOMContentLoaded", function() {
     });
 
     /* ========================================================
-       3. HOME SECTION LOGIC
-       (भविष्य में यहाँ होम पेज के वीडियो का प्ले/पॉज़ कंट्रोल 
-       या कोई पॉप-अप मैसेज लिखा जा सकता है)
-    ======================================================== */
-    /* ========================================================
-       HOME SECTION LOGIC (Auto-Scroll Slider)
+       3. HOME SECTION LOGIC (Auto-Scroll Slider)
     ======================================================== */
     let slideIndex = 0;
-    
     function showSlides() {
         let i;
         let slides = document.getElementsByClassName("slide");
-        
-        // अगर स्लाइडर पेज पर नहीं है, तो कोड यहीं रुक जाएगा
         if (slides.length === 0) return; 
 
-        // सभी तस्वीरों को छुपा दें
         for (i = 0; i < slides.length; i++) {
             slides[i].style.display = "none";  
         }
-        
         slideIndex++;
-        // अगर तस्वीरें खत्म हो जाएं, तो वापस पहली फोटो पर आ जाएं
         if (slideIndex > slides.length) { slideIndex = 1 }    
-        
-        // अगली तस्वीर दिखाएं
         slides[slideIndex - 1].style.display = "block";  
-        
-        // हर 3.5 सेकंड (3500ms) में फोटो अपने आप बदलेगी
         setTimeout(showSlides, 3500); 
     }
-
-    // फंक्शन को चालू करें
     showSlides();
+
     /* ========================================================
        4. BHAGWAAN KRISHNA SECTION LOGIC (Lightbox Feature)
-       यूज़र जब ग्रिड पर क्लिक करेगा, तो पॉप-अप खुलेगा
     ======================================================== */
     const gridItems = document.querySelectorAll('.grid-item');
     const lightboxModal = document.getElementById('lightbox-modal');
@@ -81,37 +107,29 @@ document.addEventListener("DOMContentLoaded", function() {
     const lightboxClose = document.querySelector('.lightbox-close');
 
     if (gridItems.length > 0 && lightboxModal) {
-        
-        // हर एक तस्वीर (grid-item) पर क्लिक करने का इवेंट लगाएं
         gridItems.forEach(item => {
             item.addEventListener('click', () => {
-                // क्लिक किए गए कार्ड से कैप्शन और प्लेसहोल्डर का डेटा लें
                 const caption = item.querySelector('.img-caption').innerText;
                 const placeholderText = item.querySelector('.img-placeholder').innerText;
-
-                // पॉप-अप के अंदर वह डेटा डालें
                 lightboxText.innerHTML = `
                     <h3>${caption}</h3>
                     <p style="color:#777; font-size:1.1rem; font-style:italic;">${placeholderText} जल्द ही अपलोड की जाएगी!</p>
                 `;
-
-                // पॉप-अप को दिखाएं (active क्लास जोड़ें)
                 lightboxModal.classList.add('active');
             });
         });
 
-        // 'X' बटन पर क्लिक करने से पॉप-अप बंद हो जाए
         lightboxClose.addEventListener('click', () => {
             lightboxModal.classList.remove('active');
         });
 
-        // पॉप-अप के बाहर (डार्क एरिया में) क्लिक करने से भी पॉप-अप बंद हो जाए
         lightboxModal.addEventListener('click', (e) => {
             if (e.target === lightboxModal) {
                 lightboxModal.classList.remove('active');
             }
         });
     }
+
     /* ========================================================
        5. GALLERY SECTION LOGIC (Lightbox Feature)
     ======================================================== */
@@ -121,285 +139,269 @@ document.addEventListener("DOMContentLoaded", function() {
         galleryCards.forEach(card => {
             card.addEventListener('click', () => {
                 const caption = card.querySelector('.photo-caption').innerText;
-                
-                // यहाँ सीधा कार्ड के अंदर का पूरा HTML (या इमेज का src) ले रहे हैं
                 const imgElement = card.querySelector('img');
                 let imgContent = "";
 
                 if (imgElement) {
-                    // अगर असली फोटो मिल گئی, तो उसका रास्ता ले लें
-                    const imgSrc = imgElement.src;
-                    imgContent = `<img src="${imgSrc}" style="max-width: 100%; max-height: 65vh; border-radius: 10px; margin-bottom: 15px; object-fit: contain;">`;
+                    imgContent = `<img src="${imgElement.src}" style="max-width: 100%; max-height: 65vh; border-radius: 10px; margin-bottom: 15px; object-fit: contain;">`;
                 } else {
-                    // अगर फोटो नहीं है तो पुराना टेक्स्ट दिखाएं
                     imgContent = `<div style="background: linear-gradient(135deg, #ffcc80 0%, #ffb74d 100%); width: 100%; min-height: 180px; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: white; font-size: 1.2rem; font-weight: bold; margin-bottom: 15px;">[ Photo ]</div>`;
                 }
 
-                // पॉप-अप के अंदर डेटा सेट करें
                 lightboxText.innerHTML = `
                     <h3 style="color: #d84315; border-bottom: 2px dashed #ffcc80; padding-bottom: 8px; margin-bottom: 15px;">${caption}</h3>
                     ${imgContent}
                     <p style="color:#555; font-size:1rem; margin: 0;">युवा जूनियर संघ की पुरानी यादें...</p>
                 `;
-
                 lightboxModal.classList.add('active');
             });
         });
     }
+
     /* ========================================================
        6. ABOUT US SECTION LOGIC (Scroll Reveal Animation)
-       जब यूज़र अबाउट सेक्शन पर पहुंचेगा, तो कार्ड्स स्लाइड होकर आएंगे
     ======================================================== */
     const aboutBoxes = document.querySelectorAll('.history-box, .founders-box');
-
-    // IntersectionObserver का इस्तेमाल करके चेक करें कि कार्ड स्क्रीन पर कब आ रहे हैं
     if (aboutBoxes.length > 0) {
         const observer = new IntersectionObserver((entries) => {
             entries.forEach(entry => {
-                // अगर कार्ड स्क्रीन के व्यू (viewport) में आ गया है
                 if (entry.isIntersecting) {
-                    // उसमें 'show' क्लास जोड़ दें ताकि वह एनिमेट होकर सामने आ जाए
                     entry.target.classList.add('show');
-                    
-                    // एक बार एनीमेशन पूरा होने के बाद उसे दोबारा ऑब्ज़र्व करना बंद कर दें
                     observer.unobserve(entry.target);
                 }
             });
-        }, {
-            threshold: 0.2 // जब कार्ड का 20% हिस्सा स्क्रीन पर दिखे, तभी एनीमेशन शुरू हो
-        });
+        }, { threshold: 0.2 });
 
-        // हर बॉक्स को ऑब्जर्वर के साथ जोड़ें
-        aboutBoxes.forEach(box => {
-            observer.observe(box);
-        });
+        aboutBoxes.forEach(box => { observer.observe(box); });
     }
    
     /* ========================================================
-      // ========================================================
-  // वॉलंटियर / कार्यकर्ता फॉर्म का फुल JavaScript कोड
-  // ========================================================*/
-  document.getElementById('volunteerRegistrationForm').addEventListener('submit', async (e) => {
-    e.preventDefault(); // फॉर्म सबमिट होते ही पेज को रीफ्रेश होने से रोकना
-    
-    // 1. पासवर्ड सिक्योरिटी चेक (Password Verification)
-    const vPassword = document.getElementById('v-password').value;
-    if(vPassword !== "101PRASH") {
-        alert("पासवर्ड गलत है! यह फॉर्म केवल अधिकृत सदस्यों के लिए है।");
-        return; // पासवर्ड गलत होने पर कोड यहीं रुक जाएगा
+       7. वॉलंटियर फॉर्म (फोटो स्टोरेज के साथ)
+    ======================================================== */
+    const volunteerForm = document.getElementById('volunteerRegistrationForm');
+    if (volunteerForm) {
+        volunteerForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const vPassword = document.getElementById('v-password').value;
+            if(vPassword !== "101PRASH") {
+                alert("पासवर्ड गलत है! यह फॉर्म केवल अधिकृत सदस्यों के लिए है।");
+                return;
+            }
+
+            const mobile = document.getElementById('v-mobile').value;
+            if(mobile.length !== 10) {
+                alert("⚠️ कृपया 10 अंकों का सही मोबाइल नंबर डालें।");
+                return;
+            }
+
+            const shifts = Array.from(document.querySelectorAll('input[name="shift"]:checked')).map(cb => cb.value);
+            if(shifts.length === 0) {
+                alert("⚠️ कृपया कम से कम एक शिफ्ट ज़रूर चुनें!");
+                return;
+            }
+
+            const genderObj = document.querySelector('input[name="gender"]:checked');
+            const gender = genderObj ? genderObj.value : "नहीं बताया";
+
+            const photoFile = document.getElementById('v-photo').files[0];
+            let photoUrl = "";
+
+            try {
+                // अगर यूजर ने फोटो चुनी है, तो उसे पहले Storage में अपलोड करें
+                if (photoFile) {
+                    const storageRef = ref(storage, 'volunteer_photos/' + Date.now() + '_' + photoFile.name);
+                    const snapshot = await uploadBytes(storageRef, photoFile);
+                    photoUrl = await getDownloadURL(snapshot.ref);
+                }
+
+                // अब सारी जानकारी और फोटो का लिंक Firestore में सेव करें
+                await addDoc(collection(db, "volunteers"), {
+                    name: document.getElementById('v-name').value,
+                    fatherName: document.getElementById('v-fname').value,
+                    mobile: mobile,
+                    email: document.getElementById('v-email').value,
+                    address: document.getElementById('v-address').value,
+                    gender: gender,
+                    availableShifts: shifts,
+                    feedback: document.getElementById('v-feedback').value,
+                    photoUrl: photoUrl, // यहाँ फोटो का सुरक्षित लिंक सेव होगा
+                    timestamp: new Date()
+                });
+            
+                alert(`🙏 जय श्री कृष्ण, ${document.getElementById('v-name').value}!\n\nआपका कार्यकर्ता रजिस्ट्रेशन फॉर्म सफलतापूर्वक जमा हो गया है।`);
+                e.target.reset();
+            
+            } catch(error) {
+                console.error("Firebase Error: ", error);
+                alert("डेटा सेव करने में तकनीकी दिक्कत आई: " + error.message);
+            }
+        });
     }
 
-    // 2. मोबाइल नंबर वैलिडेशन (10 अंक)
-    const mobile = document.getElementById('v-mobile').value;
-    if(mobile.length !== 10) {
-        alert("⚠️ कृपया 10 अंकों का सही मोबाइल नंबर डालें।");
-        return;
-    }
-
-    // 3. शिफ्ट (Checkboxes) का डेटा निकालना
-    const shifts = Array.from(document.querySelectorAll('input[name="shift"]:checked')).map(cb => cb.value);
-    if(shifts.length === 0) {
-        alert("⚠️ कृपया कम से कम एक शिफ्ट (कार्य का समय) ज़रूर चुनें!");
-        return;
-    }
-
-    // 4. लिंग (Gender Radio Button) का डेटा निकालना
-    const genderObj = document.querySelector('input[name="gender"]:checked');
-    const gender = genderObj ? genderObj.value : "नहीं बताया";
-
-    // 5. Firebase Firestore में सारा डेटा सेव करना
-    try {
-      await addDoc(collection(db, "volunteers"), {
-        name: document.getElementById('v-name').value,          // नाम
-        fatherName: document.getElementById('v-fname').value,    // पिता का नाम
-        mobile: mobile,                                          // मोबाइल नंबर
-        email: document.getElementById('v-email').value,         // ईमेल आईडी
-        address: document.getElementById('v-address').value,     // पूरा पता
-        gender: gender,                                          // लिंग
-        availableShifts: shifts,                                 // चुनी गई शिफ्ट्स
-        feedback: document.getElementById('v-feedback').value,   // सुझाव / फीडबैक
-        timestamp: new Date()                                    // फॉर्म भरने का समय और तारीख
-      });
-      
-      // 6. सफलता का मैसेज दिखाना और फॉर्म को खाली करना
-      alert(`🙏 जय श्री कृष्ण, ${document.getElementById('v-name').value}!\n\nआपका कार्यकर्ता रजिस्ट्रेशन फॉर्म सफलतापूर्वक जमा हो गया है।`);
-      e.target.reset(); // फॉर्म के सारे बॉक्स वापस खाली कर देगा
-      
-    } catch(error) {
-      console.error("Firebase Error: ", error);
-      alert("डेटा सेव करने में तकनीकी दिक्कत आई: " + error.message);
-    }
-  });
     /* ========================================================
-       // ========================================================*/
-  // सहयोग फॉर्म (Donation) का फुल JavaScript कोड
-  // ========================================================
-  document.getElementById('donationForm').addEventListener('submit', async (e) => {
-    e.preventDefault(); // फॉर्म सबमिट होते ही पेज को रीफ्रेश होने से रोकना
-    
-    // 1. मोबाइल नंबर वैलिडेशन (10 अंक)
-    const mobile = document.getElementById('d-mobile').value;
-    if(mobile.length !== 10) {
-        alert("⚠️ कृपया 10 अंकों का सही मोबाइल नंबर डालें।");
-        return; // नंबर गलत होने पर कोड यहीं रुक जाएगा
-    }
+       8. सहयोग फॉर्म (स्क्रीनशॉट स्टोरेज के साथ)
+    ======================================================== */
+    const donationForm = document.getElementById('donationForm');
+    if (donationForm) {
+        donationForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const mobile = document.getElementById('d-mobile').value;
+            if(mobile.length !== 10) {
+                alert("⚠️ कृपया 10 अंकों का सही मोबाइल नंबर डालें।");
+                return;
+            }
 
-    // 2. Firebase Firestore में डेटा सेव करना (बिना OTP के)
-    try {
-      await addDoc(collection(db, "donations"), {
-        donorName: document.getElementById('d-name').value,       // सहयोग कर्ता का नाम
-        mobile: mobile,                                           // मोबाइल नंबर
-        donationAmount: document.getElementById('d-amount').value,// सहयोग राशि (₹)
-        utrNumber: document.getElementById('d-utr').value,        // UTR / Transaction No.
-        timestamp: new Date()                                     // फॉर्म भरने का समय और तारीख
-      });
-      
-      // 3. सफलता का मैसेज दिखाना और फॉर्म को खाली करना
-      alert(`🙏 बहुत-बहुत धन्यवाद, ${document.getElementById('d-name').value} जी!\n\nआपकी सहयोग राशि का विवरण सफलतापूर्वक दर्ज कर लिया गया है।`);
-      e.target.reset(); // फॉर्म के सारे बॉक्स वापस खाली कर देगा
-      
-    } catch(error) {
-      console.error("Firebase Error: ", error);
-      alert("डेटा सेव करने में तकनीकी दिक्कत आई: " + error.message);
+            const receiptFile = document.getElementById('donation-receipt').files[0];
+            let receiptUrl = "";
+
+            try {
+                // पेमेंट का स्क्रीनशॉट Storage में अपलोड करें
+                if (receiptFile) {
+                    const storageRef = ref(storage, 'donation_receipts/' + Date.now() + '_' + receiptFile.name);
+                    const snapshot = await uploadBytes(storageRef, receiptFile);
+                    receiptUrl = await getDownloadURL(snapshot.ref);
+                }
+
+                // डेटाबेस में टेक्स्ट और स्क्रीनशॉट का लिंक सेव करें
+                await addDoc(collection(db, "donations"), {
+                    donorName: document.getElementById('d-name').value,
+                    mobile: mobile,
+                    donationAmount: document.getElementById('d-amount').value,
+                    utrNumber: document.getElementById('d-utr').value,
+                    receiptUrl: receiptUrl, // यहाँ स्क्रीनशॉट का लिंक सेव होगा
+                    timestamp: new Date()
+                });
+            
+                alert(`🙏 बहुत-बहुत धन्यवाद, ${document.getElementById('d-name').value} जी!\n\nआपकी सहयोग राशि का विवरण सफलतापूर्वक दर्ज कर लिया गया है।`);
+                e.target.reset();
+            
+            } catch(error) {
+                console.error("Firebase Error: ", error);
+                alert("डेटा सेव करने में तकनीकी दिक्कत आई: " + error.message);
+            }
+        });
     }
-  });
     /* ========================================================
        10. BAL PRATIYOGITA SECTION LOGIC
-       बाल प्रतियोगिता फॉर्म वैलिडेशन और पासवर्ड चेक
     ======================================================== */
     const balPratiyogitaForm = document.getElementById('balPratiyogitaForm');
     const danceCheckbox = document.getElementById('dance-checkbox');
     const songNameGroup = document.getElementById('song-name-group');
 
     if (balPratiyogitaForm) {
-        
-        // 1. अगर 'डांस' चुना गया है, तो 'Song name' वाला बॉक्स दिखाएं
-        danceCheckbox.addEventListener('change', function() {
-            if (this.checked) {
-                songNameGroup.style.display = 'block';
-            } else {
-                songNameGroup.style.display = 'none';
-                document.getElementById('bp-song').value = ''; // अनचेक करने पर नाम मिटा दें
-            }
-        });
+        if (danceCheckbox) {
+            danceCheckbox.addEventListener('change', function() {
+                if (this.checked) {
+                    songNameGroup.style.display = 'block';
+                } else {
+                    songNameGroup.style.display = 'none';
+                    document.getElementById('bp-song').value = '';
+                }
+            });
+        }
 
-        // 2. फॉर्म सबमिट होने पर लॉजिक
-        balPratiyogitaForm.addEventListener('submit', function(e) {
+        balPratiyogitaForm.addEventListener('submit', async function(e) {
             e.preventDefault();
 
-            // चेक करें कि कम से कम एक प्रतियोगिता चुनी गई है
-            const compCheckboxes = balPratiyogitaForm.querySelectorAll('input[name="competition"]:checked');
+            const compCheckboxes = Array.from(balPratiyogitaForm.querySelectorAll('input[name="competition"]:checked')).map(cb => cb.value);
             if (compCheckboxes.length === 0) {
                 alert("⚠️ कृपया कम से कम एक प्रतियोगिता ज़रूर चुनें!");
                 return;
             }
-            // कक्षा (Class) की जांच करें कि वह 0 से 7 के बीच ही हो
+
             const classInput = parseInt(document.getElementById('bp-class').value);
             if (classInput < 0 || classInput > 7) {
                 alert("⚠️ इस प्रतियोगिता में केवल कक्षा 0 से 7 तक के बच्चे ही भाग ले सकते हैं!");
                 return;
             }
 
-            // पासवर्ड चेक करें (आपके नोट्स के अनुसार)
             const passwordInput = document.getElementById('bp-password').value;
             if (passwordInput !== '108PRASH') {
-                alert("Password गलत है, युवा जूनियर संघ से संपर्क करें");
+                alert("पासवर्ड गलत है! यह फॉर्म केवल अधिकृत सदस्यों के लिए है।");
                 return;
             }
 
-            // अगर पासवर्ड सही है
-            alert("Form Submitted Successfully\nThank you !!");
-            
-            // डेटा को कंसोल में चेक करने के लिए
-            const formData = new FormData(balPratiyogitaForm);
-            const compData = Object.fromEntries(formData.entries());
-            const selectedComps = [];
-            compCheckboxes.forEach(box => selectedComps.push(box.value));
-            compData.competition = selectedComps;
-            console.log("बाल प्रतियोगिता रजिस्ट्रेशन:", compData);
+            try {
+                await addDoc(collection(db, "bal_pratiyogita_entries"), {
+                    participantName: document.getElementById('bp-name').value,
+                    fatherName: document.getElementById('bp-fname').value,
+                    className: classInput,
+                    mobile: document.getElementById('bp-mobile').value,
+                    competitions: compCheckboxes,
+                    songName: document.getElementById('bp-song') ? document.getElementById('bp-song').value : "",
+                    timestamp: new Date()
+                });
+                
+                alert("बाल प्रतियोगिता का फॉर्म सफलतापूर्वक जमा हो गया! जय श्री कृष्ण! 🙏");
+                balPratiyogitaForm.reset();
+                if(songNameGroup) songNameGroup.style.display = 'none';
 
-            // फॉर्म को रीसेट करें और डांस बॉक्स को वापस छुपाएं
-            balPratiyogitaForm.reset();
-            songNameGroup.style.display = 'none';
+            } catch(error) { 
+                alert("डेटा सेव करने में तकनीकी दिक्कत आई: " + error.message); 
+            }
         });
     }
+
     /* ========================================================
        BAL PRATIYOGITA SLIDER LOGIC (With Pause/Play Feature)
     ======================================================== */
     let bpSlideIndex = 0;
-    let bpTimer; // टाइमर को कंट्रोल करने के लिए वेरिएबल
-    let isBpPaused = false; // यह चेक करने के लिए कि स्लाइडर रुका है या चल रहा है
+    let bpTimer; 
+    let isBpPaused = false; 
 
     function showBpSlides() {
         let i;
         let bpSlides = document.getElementsByClassName("bp-slide"); 
-        
         if (bpSlides.length === 0) return; 
 
-        // सभी स्लाइड्स को छुपाएं
         for (i = 0; i < bpSlides.length; i++) {
             bpSlides[i].style.display = "none";  
         }
-        
         bpSlideIndex++;
         if (bpSlideIndex > bpSlides.length) { bpSlideIndex = 1 }    
-        
-        // अगली स्लाइड दिखाएं
         bpSlides[bpSlideIndex - 1].style.display = "block";  
-        
-        // अगर स्लाइडर 'Pause' नहीं है, तभी अगला टाइमर सेट करें
         if (!isBpPaused) {
-            // हर 4 सेकंड (4000ms) में स्लाइड बदलेगी
             bpTimer = setTimeout(showBpSlides, 4000); 
         }
     }
 
-    // बटन क्लिक करने पर Pause और Play का लॉजिक
     const bpPauseBtn = document.getElementById("bp-pause-btn");
     if (bpPauseBtn) {
         bpPauseBtn.addEventListener("click", function() {
             if (isBpPaused) {
-                // अगर रुका हुआ था, तो अब वापस 'Play' करें
                 isBpPaused = false;
                 bpPauseBtn.innerHTML = "⏸️ Pause";
                 bpPauseBtn.style.backgroundColor = "rgba(255, 255, 255, 0.8)";
                 bpPauseBtn.style.color = "#d84315";
-                
-                // स्लाइडर को उसी जगह से दोबारा चालू करें
                 bpTimer = setTimeout(showBpSlides, 4000); 
             } else {
-                // अगर चल रहा था, तो अब 'Pause' (रोक) दें
                 isBpPaused = true;
                 bpPauseBtn.innerHTML = "▶️ Play";
-                bpPauseBtn.style.backgroundColor = "#d84315"; // रुकने पर बटन का रंग बदल जाएगा
+                bpPauseBtn.style.backgroundColor = "#d84315"; 
                 bpPauseBtn.style.color = "#fff";
-                
-                // चलते हुए टाइमर को तुरंत रोक दें
                 clearTimeout(bpTimer); 
             }
         });
     }
-
-    // शुरुआत में फंक्शन को चालू करें
     showBpSlides();
+
     /* ========================================================
        11. SHARE BUTTON LOGIC (Share First, Copy if Failed)
     ======================================================== */
     window.shareSection = function(title, text, sectionId) {
-        // यह वेबसाइट का पूरा लिंक खुद बना लेगा
         const shareUrl = window.location.origin + window.location.pathname + sectionId;
         const shareContent = text + "\n\n" + shareUrl;
 
-        // यह सिर्फ कॉपी करने का फंक्शन है (जब शेयर काम न करे)
         const fallbackCopy = () => {
             navigator.clipboard.writeText(shareContent).then(() => {
                 alert("लिंक कॉपी हो गया है! 📋\n\nअब आप इसे WhatsApp या कहीं भी पेस्ट (Paste) करके भेज सकते हैं।");
             }).catch(err => {
-                alert("कृपया इस लिंक को कॉपी करके भेजें:\n\n" + shareUrl);
+                alert("कृपया इस link को कॉपी करके भेजें:\n\n" + shareUrl);
             });
         };
 
-        // 1. सबसे पहले शेयर करने की कोशिश करें
         if (navigator.share) {
             navigator.share({
                 title: title,
@@ -408,19 +410,15 @@ document.addEventListener("DOMContentLoaded", function() {
             }).then(() => {
                 console.log('सफलतापूर्वक शेयर किया गया!');
             }).catch((error) => {
-                // अगर यूज़र ने खुद शेयर मेनू काटा (Cancel किया) है, तो कुछ मत करो
-                if (error.name === 'AbortError') {
-                    console.log('यूज़र ने शेयर करना कैंसिल कर दिया।');
-                } else {
-                    // 2. अगर शेयर मेनू खुलने में कोई एरर आ गया, तो तुरंत कॉपी कर दो
+                if (error.name !== 'AbortError') {
                     fallbackCopy();
                 }
             });
         } else {
-            // 3. अगर ब्राउज़र (जैसे लैपटॉप) शेयर सपोर्ट ही नहीं करता, तो सीधा कॉपी कर दो
             fallbackCopy();
         }
     };
+    
     /* ========================================================
        HAMBURGER MENU LOGIC (Mobile Navigation)
     ======================================================== */
@@ -428,26 +426,22 @@ document.addEventListener("DOMContentLoaded", function() {
     const navMenu = document.getElementById('nav-menu');
 
     if (hamburgerBtn && navMenu) {
-        // 1. बटन दबाने पर मेनू खोलना और बंद करना
         hamburgerBtn.addEventListener('click', () => {
-            navMenu.classList.toggle('show');
-            
-            // अगर मेनू खुला है, तो आइकॉन बदलकर '✖ बंद करें' कर दें
-            if (navMenu.classList.contains('show')) {
+            navMenu.classList.toggle('active');
+            if (navMenu.classList.contains('active')) {
                 hamburgerBtn.innerHTML = '✖ बंद करें';
             } else {
                 hamburgerBtn.innerHTML = '☰ मेनू';
             }
         });
 
-        // 2. जब यूज़र किसी भी लिंक पर क्लिक करे, तो मेनू अपने आप बंद हो जाए
         const mobileNavLinks = navMenu.querySelectorAll('a');
         mobileNavLinks.forEach(link => {
             link.addEventListener('click', () => {
-                navMenu.classList.remove('show');
-                hamburgerBtn.innerHTML = '☰ मेनू'; // वापस मेनू बना दें
+                navMenu.classList.remove('active');
+                hamburgerBtn.innerHTML = '☰ मेनू'; 
             });
         });
     }
-
+    
 });

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>कृष्णा जन्माष्टमी महोत्सव 2026</title>
+    <title>कृष्णा जन्माष्टमी महोत्सव</title>
     <!-- CSS फाइल को लिंक करना -->
     <link rel="stylesheet" href="style.css">
 </head>
@@ -17,7 +17,7 @@
             <div class="logo-title-group">
                 <!-- यहाँ अपनी फोटो का सही नाम डालें -->
                 <img src="logo1.jpeg" alt="युवा जूनियर संघ लोगो" class="site-logo">
-                <h1>कृष्णा जन्माष्टमी महोत्सव 2026, by युवा जूनियर संघ</h1>
+                <h1>कृष्णा जन्माष्टमी महोत्सव, by युवा जूनियर संघ</h1>
             </div>
             
             <!-- कंट्रोल बॉक्स: मेनू बटन -->
@@ -82,7 +82,7 @@
     <!-- तस्वीर के ऊपर दिखने वाला टेक्स्ट -->
     <div class="home-content">
         <h1>युवा जूनियर संघ</h1>
-        <h2>श्री कृष्ण जन्माष्टमी महोत्सव 2026</h2>
+        <h2>श्री कृष्ण जन्माष्टमी महोत्सव </h2>
         <p>ठाकुर पट्टी, भवानीपुर उत्तर में आपका स्वागत है</p>
     </div>
 </section>
@@ -332,8 +332,8 @@
                     <li class="notice-item">
                         <span class="notice-text">📄 युवा जूनियर संघ - मीटिंग एजेंडा</span>
                         <div class="action-btns">
-                            <a href="pan manish.pdf" target="_blank" class="open-btn">👁️ Open</a>
-                            <a href="pan manish.pdf" download class="download-btn">⬇️ Download</a>
+                            <a href="new.pdf" target="_blank" class="open-btn">👁️ Open</a>
+                            <a href="new.pdf" download class="download-btn">⬇️ Download</a>
                         </div>
                     </li>
                     
@@ -623,8 +623,12 @@
         <!-- यहाँ QR कोड का साइज बढ़ा दिया गया है -->
         <img src="QRcode.jpeg" alt="युवा जूनियर संघ QR Code" style="width: 300px; height: 300px; object-fit: contain; border-radius: 12px; display: block; margin: 0 auto;">
     </div>
-    <p class="instruction-text" style="font-weight: 600; color: #d84315;">स्कैन करें और पेमेंट का स्क्रीनशॉट नीचे दिए गए फॉर्म में अपलोड करें।</p>
-</div>
+        <!-- पेमेंट अलर्ट बॉक्स -->
+        <div class="payment-alert">
+            <strong>⚠️ महत्वपूर्ण सूचना:</strong><br>
+            कृपया पेमेंट करने के बाद उसका <b>स्क्रीनशॉट (SS)</b> ज़रूर लें और नीचे दिया गया <b>फॉर्म अवश्य भरें</b>। यह QR कोड सीधे तौर पर 'युवा जूनियर संघ' का नहीं है, बल्कि संघ के एक सदस्य का व्यक्तिगत QR कोड है। इसलिए, आपके सहयोग की सही पुष्टि के लिए फॉर्म भरना अनिवार्य है।
+        </div>
+        </div>
 
             <!-- 2. सहयोग कर्ता का विवरण फॉर्म -->
             <div class="form-box donation-form">
@@ -702,162 +706,8 @@
         </div>
     </div>
 
-    <!-- JavaScript फाइल को लिंक करना -->
-    <script src="script.js"></script>
-   <!-- Firebase Backend: All Forms -->
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-app.js";
-  import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore.js";
-  import { getAuth, RecaptchaVerifier, signInWithPhoneNumber } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-auth.js";
-
-  const firebaseConfig = {
-    apiKey: "AIzaSyBRI36zVkKt6PShl0AWzyLWw_V92zpA4g4",
-    authDomain: "yuva-juniour-sangh.firebaseapp.com",
-    projectId: "yuva-juniour-sangh",
-    storageBucket: "yuva-juniour-sangh.firebasestorage.app",
-    messagingSenderId: "372832457105",
-    appId: "1:372832457105:web:3b5ce1fad0cbbc87b40a30",
-    measurementId: "G-X9V947QE96"
-  };
-
-  const app = initializeApp(firebaseConfig);
-  const db = getFirestore(app);
-  const auth = getAuth(app);
-  auth.useDeviceLanguage();
-
-  // ==========================================
-  // 1. कार्यकर्ता फॉर्म (Volunteer) का लॉजिक
-  // ==========================================
-  let volConfirmationResult = null;
-  let isVolVerified = false;
-
-  window.volRecaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', { 'size': 'normal' });
-
-  // OTP भेजना
-  document.getElementById('send-otp-btn').addEventListener('click', () => {
-    const mobile = document.getElementById('v-mobile').value;
-    if(mobile.length !== 10) return alert("कृपया 10 अंकों का सही मोबाइल नंबर डालें।");
-    
-    signInWithPhoneNumber(auth, "+91" + mobile, window.volRecaptchaVerifier)
-      .then((result) => {
-        volConfirmationResult = result;
-        document.getElementById('otp-section').style.display = 'block';
-        alert("OTP भेज दिया गया है!");
-      }).catch((error) => alert("OTP भेजने में समस्या आई।"));
-  });
-
-  // OTP वेरीफाई करना
-  document.getElementById('verify-otp-btn').addEventListener('click', () => {
-    const otp = document.getElementById('v-otp').value;
-    volConfirmationResult.confirm(otp).then(() => {
-      isVolVerified = true;
-      document.getElementById('otp-status-msg').innerText = "वेरीफाई हो गया ✅";
-      document.getElementById('otp-status-msg').style.color = "green";
-    }).catch(() => alert("गलत OTP!"));
-  });
-
-  // फॉर्म डेटा सेव करना
-  document.getElementById('volunteerRegistrationForm').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    if (!isVolVerified) return alert("पहले अपना मोबाइल नंबर वेरीफाई करें!");
-
-    const shifts = Array.from(document.querySelectorAll('input[name="shift"]:checked')).map(cb => cb.value);
-    const genderObj = document.querySelector('input[name="gender"]:checked');
-
-    try {
-      await addDoc(collection(db, "volunteers"), {
-        name: document.getElementById('v-name').value,
-        fatherName: document.getElementById('v-fname').value,
-        mobile: document.getElementById('v-mobile').value,
-        email: document.getElementById('v-email').value,
-        address: document.getElementById('v-address').value,
-        gender: genderObj ? genderObj.value : "",
-        availableShifts: shifts,
-        feedback: document.getElementById('v-feedback').value,
-        timestamp: new Date()
-      });
-      alert("कार्यकर्ता फॉर्म सफलतापूर्वक जमा हो गया!");
-      e.target.reset();
-    } catch(error) { alert("दिक्कत आई: " + error.message); }
-  });
-
-  // ==========================================
-  // 2. बाल प्रतियोगिता (Bal Pratiyogita) का लॉजिक
-  // ==========================================
-  document.getElementById('balPratiyogitaForm').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    
-    // पासवर्ड चेक करना
-    const password = document.getElementById('bp-password').value;
-    if(password !== "Yuva2026") { // यहाँ आप अपना असली पासवर्ड डाल सकते हैं
-        return alert("पासवर्ड गलत है! यह फॉर्म केवल अधिकृत सदस्यों के लिए है।");
-    }
-
-    const competitions = Array.from(document.querySelectorAll('input[name="competition"]:checked')).map(cb => cb.value);
-    
-    try {
-      await addDoc(collection(db, "bal_pratiyogita_entries"), {
-        participantName: document.getElementById('bp-name').value,
-        fatherName: document.getElementById('bp-fname').value,
-        className: document.getElementById('bp-class').value,
-        mobile: document.getElementById('bp-mobile').value,
-        competitions: competitions,
-        songName: document.getElementById('bp-song') ? document.getElementById('bp-song').value : "",
-        timestamp: new Date()
-      });
-      alert("बाल प्रतियोगिता का फॉर्म सफलतापूर्वक जमा हो गया!");
-      e.target.reset();
-    } catch(error) { alert("दिक्कत आई: " + error.message); }
-  });
-
-  // ==========================================
-  // 3. सहयोग फॉर्म (Donation) का लॉजिक
-  // ==========================================
-  let donConfirmationResult = null;
-  let isDonVerified = false;
-
-  window.donRecaptchaVerifier = new RecaptchaVerifier(auth, 'd-recaptcha-container', { 'size': 'normal' });
-
-  // OTP भेजना
-  document.getElementById('d-send-otp-btn').addEventListener('click', () => {
-    const mobile = document.getElementById('d-mobile').value;
-    if(mobile.length !== 10) return alert("कृपया 10 अंकों का सही मोबाइल नंबर डालें।");
-    
-    signInWithPhoneNumber(auth, "+91" + mobile, window.donRecaptchaVerifier)
-      .then((result) => {
-        donConfirmationResult = result;
-        document.getElementById('d-otp-section').style.display = 'block';
-        alert("OTP भेज दिया गया है!");
-      }).catch((error) => alert("OTP भेजने में समस्या आई।"));
-  });
-
-  // OTP वेरीफाई करना
-  document.getElementById('d-verify-otp-btn').addEventListener('click', () => {
-    const otp = document.getElementById('d-otp').value;
-    donConfirmationResult.confirm(otp).then(() => {
-      isDonVerified = true;
-      document.getElementById('d-otp-status-msg').innerText = "वेरीफाई हो गया ✅";
-      document.getElementById('d-otp-status-msg').style.color = "green";
-    }).catch(() => alert("गलत OTP!"));
-  });
-
-  // फॉर्म डेटा सेव करना
-  document.getElementById('donationForm').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    if (!isDonVerified) return alert("पहले अपना मोबाइल नंबर वेरीफाई करें!");
-
-    try {
-      await addDoc(collection(db, "donations"), {
-        donorName: document.getElementById('d-name').value,
-        mobile: document.getElementById('d-mobile').value,
-        donationAmount: document.getElementById('d-amount').value,
-        utrNumber: document.getElementById('d-utr').value,
-        timestamp: new Date()
-      });
-      alert("आपका सहयोग सफलतापूर्वक दर्ज कर लिया गया है। धन्यवाद!");
-      e.target.reset();
-    } catch(error) { alert("दिक्कत आई: " + error.message); }
-  });
-</script>
+    <script type="module" src="script.js"></script>
+</body>
+</html>
 </body>
 </html>
