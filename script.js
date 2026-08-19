@@ -1,9 +1,7 @@
 // --- script.js : कृष्ण जन्माष्टमी महोत्सव 2026 ---
 
-// 🌟 फायरबेस इंपोर्ट और कॉन्फ़िगरेशन को फ़ाइल में सबसे ऊपर रखें
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
 import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
-// 👉 1. यह नई लाइन यहाँ इम्पोर्ट के नीचे जोड़ें:
 import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-storage.js";
 
 const firebaseConfig = {
@@ -16,11 +14,11 @@ const firebaseConfig = {
     measurementId: "G-X9V947QE96"
 };
 
-// फायरबेस को एक बार ग्लोबल शुरू करें ताकि सभी फॉर्म्स को 'db' मिल सके
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
-// 👉 2. यह लाइन db के ठीक नीचे जोड़ दें:
 const storage = getStorage(app);
+
+
 
 // अब बाकी का DOM कोड शुरू होगा
 document.addEventListener("DOMContentLoaded", function() {
